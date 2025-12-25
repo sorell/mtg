@@ -1,0 +1,7 @@
+dotenv
+google-adk == 1.21.0
+chromadb == 1.4.0
+
+# Needed for chromadb, when local language models are used.
+# Causes download of 1+ GB
+sentence_transformers

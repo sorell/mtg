@@ -53,10 +53,10 @@ A deck typically needs:
 - 1-3 cards of mass removal (wipes)
 """
 
-client = genai.Client(api_key=GOOGLE_API_KEY)
+# client = genai.Client(api_key=GOOGLE_API_KEY)
 
-for model in client.models.list():
-    print(model.name)
+# for model in client.models.list():
+#     print(model.name)
 
 retry_config=types.HttpRetryOptions(
     attempts=5,  # Maximum retry attempts
@@ -86,10 +86,6 @@ async def main():
 
 
 if __name__ == '__main__':
-    #import subprocess
-    #subprocess.run(["pwd"])
-    os.system("pwd")
-    exit(0)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     asyncio.run(main())
