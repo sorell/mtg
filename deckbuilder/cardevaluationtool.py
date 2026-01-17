@@ -6,6 +6,7 @@ from google.adk.agents import LlmAgent
 from google.adk.models.google_llm import Gemini
 from google.adk.runners import InMemoryRunner
 from google.genai import types
+import helper
 import logging
 
 
@@ -36,14 +37,7 @@ def search_glossary(keyword: str) -> list[str]:
     return results["documents"][0]
 
 
-async def card_evaluation_agent(query: str) -> str:
-    """
-    This tool evaluates Magic: The Gathering cards based on their properties.
-
-    :param query: Cards listed in natural language, f.ex: "TODO".
-    :return: A list of cards, in natural language, sorted based on their mutual synergy.
-    """
-
+async def _run_agent(query: str) -> str:
     instruction = """
     You are a Magic: the Gathering card game expert. Your goal is to evaluate and rank cards based on given parameters.
 
@@ -68,25 +62,22 @@ async def card_evaluation_agent(query: str) -> str:
     Context for user's text:
     - "Trigger": Rules text starting with "When", "Whenever" or "At" are triggers. When examining cards, they synergize more when their rules text causes a trigger activation in another card.
     """
-
-    retry_config = types.HttpRetryOptions(
-        attempts=5,
-        exp_base=7,
-        initial_delay=1,
-        http_status_codes=[500, 503, 504],
-    )
-
-    agent = LlmAgent(
-        name="card_evaluation_agent",
-        model=Gemini(
-            model="gemini-2.5-flash",
-            retry_options=retry_config),
-        instruction=instruction,
-        tools=[search_glossary])
-    
-    runner = InMemoryRunner(agent=agent)
+    runner = helper.get_runner(instruction, [search_glossary])
     return await runner.run_debug(query)
-        
+
+
+async def card_evaluation_agent(query: str) -> str:
+    """
+    This tool evaluates Magic: The Gathering cards based on their properties.
+
+    :param query: Cards listed in natural language, f.ex: "TODO".
+    :return: A list of cards, in natural language, sorted based on their mutual synergy.
+    """
+    logging.info(f"Evaluation <= {query}")
+    response = helper.extract_llm_response(await _run_agent(query))
+    logging.info(f"Evaluation => {response}")
+    return response
+
 
 async def main():
     logging.info("Initializing Card Evaluation Tool...")
