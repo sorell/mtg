@@ -36,34 +36,34 @@ def search_glossary(keyword: str) -> list[str]:
     return results["documents"][0]
 
 
-async def card_synergy_agent(query: str) -> str:
+async def card_evaluation_agent(query: str) -> str:
     """
-    This tool organizes Magic: The Gathering cards based on their mutual synergy.
+    This tool evaluates Magic: The Gathering cards based on their properties.
 
     :param query: Cards listed in natural language, f.ex: "TODO".
     :return: A list of cards, in natural language, sorted based on their mutual synergy.
     """
 
     instruction = """
-    You are a Magic: the Gathering card game deckbuilding Expert. Your goal is to identify synergies between the given cards
-    and sort them based on higher or lower synergy. Order the best synergy cards first.
+    You are a Magic: the Gathering card game expert. Your goal is to evaluate and rank cards based on given parameters.
 
-    Synergy and effectiveness is determined by:
-    - Cards with Instant type or keyword "Flash" in their rules text are more effective.
-    - Cards with lower mana value are more effective. The higher mana value, the more costly it is to play. Generally less than 3 is optimal, 3 is okay and higher is costly.
-    - Cards with mutual synergy are more effective.
-
-    1. Use the 'search_glossary' tool to look up card keywords.
+    1. Use the 'search_glossary' tool to look up rules text keywords.
     2. Compare the retrieved information against the user's provided text.
-    3. Sort the user given items based on synergy, best first and descending.    
+    3. Sort the user given items based on evaluation, best first and descending.
+
+    Unless the user specifies in their query, evaluate the cards based on these properties:
+    - Effectiveness: cards with Instant type or keyword "Flash" in their rules text are more effective, cards with lower mana value are more effective.
+    - Versatility: cards that have wider effect are more versatile; f.ex. cards that offer multiple choises to use, cards that can affect on multiple targets
+      or cards that are able to affect on wider type of targets (like "destroy a creature" vs "destroy a nonland permanent").
+    - Synergy: cards with overlap in their rules mechanics synergize with each other.
 
     Cards are listed like:
     **Card name** (Mana value) - Card types. Rules text.
     For example:
     **Stonecoil Serpent** (X) - Artifact Creature — Snake. Has Reach, Trample, Protection from Multicolored. Enters with X +1/+1 counters.
-
     Where:
-    - Mana value: the cost of playing the card, indicated in symbols W,U,B,R,G (signifying colored cost), or number/X (signifying defined or variable cost of any kind of mana).
+    - Mana value: the cost of playing the card, indicated in symbols W,U,B,R,G (signifying colored cost, each symbol equal cost of 1 mana),
+      or number/X (signifying defined or variable cost of any kind of mana).
 
     Context for user's text:
     - "Trigger": Rules text starting with "When", "Whenever" or "At" are triggers. When examining cards, they synergize more when their rules text causes a trigger activation in another card.
@@ -77,7 +77,7 @@ async def card_synergy_agent(query: str) -> str:
     )
 
     agent = LlmAgent(
-        name="card_synergy_agent",
+        name="card_evaluation_agent",
         model=Gemini(
             model="gemini-2.5-flash",
             retry_options=retry_config),
@@ -89,7 +89,7 @@ async def card_synergy_agent(query: str) -> str:
         
 
 async def main():
-    logging.info("Initializing Card Synergy Tool...")
+    logging.info("Initializing Card Evaluation Tool...")
 
     print("Type a natural language query to test (or 'exit' to quit).")
     print("Examples: 'commander legal vampires', 'instant type spells that cost 2 mana'")
@@ -107,7 +107,7 @@ async def main():
         #user_input = "Creatures with red/white color identity, with trample, mana value 3 or less"
 
         print(f"🔎 Researching...")
-        return await card_synergy_agent(user_input)
+        return await card_evaluation_agent(user_input)
 
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     **Beast Within** ({2}{G}) - Instant. Destroy target permanent. Its controller creates a 3/3 green Beast creature token.
     """
 
-    result = asyncio.run(card_synergy_agent(query))
+    result = asyncio.run(card_evaluation_agent(query))
 
     print("*" * 50)
     print(result)

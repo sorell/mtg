@@ -6,24 +6,21 @@ from google.adk.runners import InMemoryRunner
 from google.genai import types
 import logging
 from scryfallquerytool import scryfall_query_agent
-
+from cardevaluationtool import card_evaluation_agent
 
 async def deckbuilder_agent(query: str) -> str:
     """
-    This tool...
-
-    :param query: ...
-    :return: ...
+    A Magic: the Gathering deckbuilding helper agent.
     """
 
     instruction = """
-    You are a Scryfall Search Syntax Expert. Your goal is to translate a natural language request into a single
-    Scryfall API 'q' parameter string.
-    
-    - If the user specifies a card name directly, use 'cardname' or '"Card Name"' for exact matches.
-    - Do NOT include the full URL, just the query string.
-    - Example Input: "Creatures with red/white color identity, trample, cost 3 or less and have 'lightning' in their name"
-    - Example search_cards_tool param: "format:commander game:paper t:creature id:rw o:trample mv<=3 lightning"
+    You are a Magic: the Gathering deck building expert. By default the deck's game format is Commander, where
+    there must be exactly 100 cards, including Commander card, whose color identity defines the color identity
+    of other cards in the deck. A commander deck can not have more than one copy of each cards, except Basic lands.
+
+    Your task is to help the user build their (Commander) deck. Use the 'scryfall_query_tool' for querying the
+    cards database. Use the 'card_evaluation_tool' to compare a set of cards to determine which ones best satisfy
+    the user's query.
     """
 
     retry_config = types.HttpRetryOptions(
@@ -39,7 +36,7 @@ async def deckbuilder_agent(query: str) -> str:
             model="gemini-2.5-flash",
             retry_options=retry_config),
         instruction=instruction,
-        tools=[scryfall_query_agent])
+        tools=[scryfall_query_agent, card_evaluation_agent])
     
     runner = InMemoryRunner(
         agent=agent,
@@ -67,7 +64,7 @@ async def main():
             #user_input = "Creatures with red/white color identity, with trample, mana value 3 or less"
 
             print(f"🔎 Searching...")
-            return await scryfall_query_agent(user_input)
+            return await deckbuilder_agent(user_input)
 
         except KeyboardInterrupt:
             print("\nOperation cancelled by user.")
