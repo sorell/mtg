@@ -3,9 +3,19 @@
 # Convert Sorted site csv to Moxfield csv
 
 # The export starts with a "sep=," line, followed by the header
-if [ "`tail -n +2 "$1" | head -n 1 | tr -d '\r'`" != "List Type,List Name,Collection,Format,Board,Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Rarity,Language,Price Bought,Date Bought,Parent List Type,Parent List Name,Current Price (tcgplayer_marketsellprice),List Cover Image,Parent List Cover Image" ]; then
-	>&2 echo "Not a sorted site's export"
-	exit 1
+if ! tail -n +2 "$1" | head -n 1 | tr -d '\r' | awk -F, '{
+    if ($1 == "List Type" && $2 == "List Name" && $3 == "Collection" &&
+        $4 == "Format" && $5 == "Board" && $6 == "Quantity" &&
+        $7 == "Card Name" && $8 == "Set Code" && $9 == "Set Name" &&
+        $10 == "Card Number" && $11 == "Condition" && $12 == "Printing" &&
+        $13 == "Rarity" && $14 == "Language" && $15 == "Price Bought") {
+        exit 0
+    } else {
+        exit 1
+    }
+}'; then
+    >&2 echo "Not a sorted site's export"
+    exit 1
 fi
 
 echo '"Count","Tradelist Count","Name","Edition","Condition","Language","Foil","Tags","Last Modified","Collector Number","Alter","Proxy","Purchase Price"'
